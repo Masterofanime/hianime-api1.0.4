@@ -23,25 +23,32 @@ async function getDecryptionKey() {
     return cachedKey;
   }
 
-  try {
-    const { data: key } = await axios.get(
-      'https://raw.githubusercontent.com/ryanwtf88/megacloud-keys/refs/heads/master/key.txt',
-      { timeout: 5000 }
-    );
+  const FALLBACK_KEY = "3709ad8892f413166b796a10c7fb86018bd1be1c7ae6f4d2cfc3fdc299cb3205";
 
-    cachedKey = key.trim();
-    keyLastFetched = now;
-    console.log('Decryption key fetched and cached');
+try {
+  const { data: key } = await axios.get(
+    'https://raw.githubusercontent.com/ryanwtf88/megacloud-keys/refs/heads/master/key.txt',
+    { timeout: 5000 }
+  );
+
+  cachedKey = key.trim();
+  keyLastFetched = now;
+  console.log('Decryption key fetched and cached');
+  return cachedKey;
+
+} catch (error) {
+  console.error('Failed to fetch decryption key:', error.message);
+
+  // 1️⃣ Use expired cached key if available
+  if (cachedKey) {
+    console.log('Using expired cached key as fallback');
     return cachedKey;
-  } catch (error) {
-    console.error('Failed to fetch decryption key:', error.message);
-    // Return cached key even if expired as fallback
-    if (cachedKey) {
-      console.log('Using expired cached key as fallback');
-      return cachedKey;
-    }
-    throw new Error('Unable to fetch decryption key');
   }
+
+  // 2️⃣ Use hardcoded fallback key
+  console.log('Using hardcoded fallback key');
+  return FALLBACK_KEY;
+}
 }
 
 /**
